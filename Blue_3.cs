@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 
 namespace Lab_7
@@ -9,51 +9,19 @@ namespace Lab_7
         {
             private readonly string name;
             private readonly string surname;
-            protected int[] penaltyTimes; // Уровень доступа повышен до protected
+            protected int[] penaltyTimes;
 
             public string Name => name;
             public string Surname => surname;
 
-            public int[] Penalties // Переименовано в Penalties
+            public int[] Penalties
             {
-                get
-                {
-                    if (penaltyTimes == null) return null;
-                    int[] copy = new int[penaltyTimes.Length];
-                    Array.Copy(penaltyTimes, copy, copy.Length);
-                    return copy;
-                }
+                get => penaltyTimes?.ToArray() ?? new int[0];
             }
 
-            public int Total // Переименовано в Total
-            {
-                get
-                {
-                    if (penaltyTimes == null) return 0;
+            public int Total => penaltyTimes?.Sum() ?? 0;
 
-                    int total = 0;
-                    foreach (int time in penaltyTimes)
-                    {
-                        total += time;
-                    }
-                    return total;
-                }
-            }
-
-            public virtual bool IsExpelled // Сделано виртуальным
-            {
-                get
-                {
-                    if (penaltyTimes == null)
-                        return false;
-
-                    foreach (int time in penaltyTimes)
-                    {
-                        if (time == 10) return true;
-                    }
-                    return false;
-                }
-            }
+            public virtual bool IsExpelled => penaltyTimes?.Contains(10) ?? false;
 
             public Participant(string name, string surname)
             {
@@ -62,13 +30,11 @@ namespace Lab_7
                 penaltyTimes = new int[0];
             }
 
-            public virtual void PlayMatch(int time) // Сделано виртуальным
+            public virtual void PlayMatch(int time)
             {
-                if (penaltyTimes == null) return;
+                if (time < 0 || time > 10) return;
 
-                int[] newArray = new int[penaltyTimes.Length + 1];
-                Array.Copy(penaltyTimes, newArray, penaltyTimes.Length);
-                penaltyTimes = newArray;
+                Array.Resize(ref penaltyTimes, penaltyTimes.Length + 1);
                 penaltyTimes[penaltyTimes.Length - 1] = time;
             }
 
@@ -85,137 +51,67 @@ namespace Lab_7
 
         public class BasketballPlayer : Participant
         {
-            private int[] fouls; // Массив для хранения фолов
-            private int foulsCount; // Количество добавленных фолов
+            private int[] fouls = new int[0];
 
-            public BasketballPlayer(string name, string surname) : base(name, surname)
-            {
-                fouls = new int[0];
-                foulsCount = 0;
-            }
+            public BasketballPlayer(string name, string surname) : base(name, surname) { }
 
             public override bool IsExpelled
             {
                 get
                 {
-                    if (foulsCount == 0) return false;
+                    if (fouls.Length == 0) return false;
 
-                    // Условие 1: более 10% матчей с 5 фолами
-
-                    int matchesWithFiveFouls = 0;
-                    for (int i = 0; i < foulsCount; i++)
-                    {
-                        if (fouls[i] == 5) matchesWithFiveFouls++;
-                    }
-                    double percentWithFiveFouls = (double)matchesWithFiveFouls / foulsCount;
+                    int matchesWithFiveFouls = fouls.Count(f => f == 5);
+                    double percentWithFiveFouls = (double)matchesWithFiveFouls / fouls.Length;
                     if (percentWithFiveFouls > 0.1) return true;
 
-
-                    int totalFouls = 0;
-                    for (int i = 0; i < foulsCount; i++)
-                    {
-                        totalFouls += fouls[i];
-                    }
-                    if (totalFouls > 2 * foulsCount) return true; // Условие 2: сумма фолов больше, чем удвоенное количество матчей
-
-                    return false;
+                    return fouls.Sum() > 2 * fouls.Length;
                 }
             }
 
             public override void PlayMatch(int foulsInMatch)
             {
-                if (foulsInMatch < 0 || foulsInMatch > 5) return; 
+                if (foulsInMatch < 0 || foulsInMatch > 5) return;
 
-                int[] newArray = new int[foulsCount + 1];
-                Array.Copy(fouls, newArray, foulsCount);
-                fouls = newArray;
-                fouls[foulsCount] = foulsInMatch;
-                foulsCount++;
+                Array.Resize(ref fouls, fouls.Length + 1);
+                fouls[^1] = foulsInMatch;
             }
         }
 
         public class HockeyPlayer : Participant
         {
-            private static HockeyPlayer[] allHockeyPlayers = new HockeyPlayer[0];
-            private static int playersCount = 0; 
+            private static List<HockeyPlayer> allHockeyPlayers = new List<HockeyPlayer>();
 
             public HockeyPlayer(string name, string surname) : base(name, surname)
             {
-                Array.Resize(ref allHockeyPlayers, playersCount + 1);
-                allHockeyPlayers[playersCount] = this;
-                playersCount++;
+                allHockeyPlayers.Add(this);
             }
 
             public override bool IsExpelled
             {
                 get
                 {
-                    if (penaltyTimes != null)
-                    {
-                        for (int i = 0; i < penaltyTimes.Length; i++)
-                        {
-                            if (penaltyTimes[i] == 10) return true; // Условие 1: хотя бы в одном матче было 10 минут штрафа
-                        }
-                    }
-                    
-                    double totalPenaltyMinutes = 0;
-                    if (penaltyTimes != null)
-                    {
-                        for (int i = 0; i < penaltyTimes.Length; i++)
-                        {
-                            totalPenaltyMinutes += penaltyTimes[i];
-                        }
-                    }
+                    if (penaltyTimes?.Contains(10) ?? false) return true;
 
-                    double totalAllPenaltyMinutes = 0;
-                    for (int i = 0; i < playersCount; i++)
-                    {
-                        if (allHockeyPlayers[i].penaltyTimes != null)
-                        {
-                            for (int j = 0; j < allHockeyPlayers[i].penaltyTimes.Length; j++)
-                            {
-                                totalAllPenaltyMinutes += allHockeyPlayers[i].penaltyTimes[j];
-                            }
-                        }
-                    }
+                    double totalPenaltyMinutes = penaltyTimes?.Sum() ?? 0;
+                    double totalAllPenaltyMinutes = allHockeyPlayers.Sum(p => p.penaltyTimes?.Sum() ?? 0);
+                    double averagePenalty = totalAllPenaltyMinutes / allHockeyPlayers.Count;
 
-                    double averagePenalty = totalAllPenaltyMinutes / playersCount;
-                    if (totalPenaltyMinutes > 0.1 * averagePenalty) return true;
-
-                    return false;
+                    return totalPenaltyMinutes > 0.1 * averagePenalty;
                 }
             }
 
             public override void PlayMatch(int penaltyTime)
             {
-                if (penaltyTime < 0 || penaltyTime > 10) return; 
+                if (penaltyTime < 0 || penaltyTime > 10) return;
 
-                int[] newArray = new int[penaltyTimes.Length + 1];
-                Array.Copy(penaltyTimes, newArray, penaltyTimes.Length);
-                penaltyTimes = newArray;
-                penaltyTimes[penaltyTimes.Length - 1] = penaltyTime;
+                Array.Resize(ref penaltyTimes, penaltyTimes.Length + 1);
+                penaltyTimes[^1] = penaltyTime;
             }
 
             public void RemoveFromList()
             {
-                int index = -1;
-                for (int i = 0; i < playersCount; i++)
-                {
-                    if (allHockeyPlayers[i] == this)
-                    {
-                        index = i;
-                        break;
-                    }
-                }
-
-                if (index == -1) return;
-
-                for (int i = index; i < playersCount - 1; i++)
-                {
-                    allHockeyPlayers[i] = allHockeyPlayers[i + 1];
-                }
-                Array.Resize(ref allHockeyPlayers, playersCount - 1);
-                playersCount--;
+                allHockeyPlayers.Remove(this);
             }
         }
     }
