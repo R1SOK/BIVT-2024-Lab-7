@@ -1,99 +1,106 @@
-﻿using System;
+using System;
 using System.Linq;
 
-namespace Lab_7
+namespace Lab_6
 {
     public class Blue_2
     {
         public abstract class WaterJump
         {
-            private string _name; // Название турнира
-            private int _bank; // Призовой фонд
-            private Participant[] _participants; // Массив участников
-            private int _count;
+            private string _tournamentName;
+            private int _prizeFund;
+            private List<Participant> _participants;
 
-            public string Name => _name;
-            public int Bank => _bank;
-            public Participant[] Participants => _participants;
+            public string TournamentName => _tournamentName;
+            public int PrizeFund => _prizeFund;
+            public IReadOnlyList<Participant> Participants => _participants;
 
-            public abstract double[] Prize { get; } // Абстрактное свойство призовых мест
-
-            public WaterJump(string name, int bank)
+            protected WaterJump(string tournamentName, int prizeFund)
             {
-                _name = name;
-                _bank = bank;
-                _participants = new Participant[0];
-                _count = 0;
+                _tournamentName = tournamentName;
+                _prizeFund = prizeFund;
+                _participants = new List<Participant>();
             }
 
-            // Метод для добавления одного участника
             public void Add(Participant participant)
             {
-                if (participant == null) return;
-                Array.Resize(ref _participants, _count + 1);
-                _participants[_count] = participant;
-                _count++;
+                _participants.Add(participant);
             }
 
-            // Метод для добавления нескольких участников
-            public void Add(params Participant[] participants)
+            public void Add(IEnumerable<Participant> participants)
             {
-                if (participants == null || participants.Length == 0) return;
-                int newSize = _count + participants.Length;
-                Array.Resize(ref _participants, newSize);
-                Array.Copy(participants, 0, _participants, _count, participants.Length);
-                _count = newSize;
+                _participants.AddRange(participants);
             }
+
+            public abstract void StartCompetition();
+            public abstract double[] Prize { get; }
         }
 
         public class WaterJump3m : WaterJump
         {
-            public WaterJump3m(string name, int bank) : base(name, bank) { }
+            public WaterJump3m(string tournamentName, int prizeFund) : base(tournamentName, prizeFund) { }
+
+            public override void StartCompetition()
+            {
+                var sortedParticipants = Participants.OrderByDescending(p => p.TotalScore).ToArray();
+                Participant.Sort(sortedParticipants);
+            }
 
             public override double[] Prize
             {
                 get
                 {
-                    if (Participants.Length < 3) return new double[0];
-                    Participant.Sort(Participants);
-                    return new double[] { Bank * 0.5, Bank * 0.3, Bank * 0.2 };
+                    if (Participants.Count < 3)
+                        return new double[0];
+
+                    double[] prizes = new double[3];
+                    prizes[0] = PrizeFund * 0.5;
+                    prizes[1] = PrizeFund * 0.3;
+                    prizes[2] = PrizeFund * 0.2;
+
+                    return prizes;
                 }
             }
         }
 
         public class WaterJump5m : WaterJump
         {
-            public WaterJump5m(string name, int bank) : base(name, bank) { }
+            public WaterJump5m(string tournamentName, int prizeFund) : base(tournamentName, prizeFund) { }
+
+            public override void StartCompetition()
+            {
+                var sortedParticipants = Participants.OrderByDescending(p => p.TotalScore).ToArray();
+                Participant.Sort(sortedParticipants);
+            }
 
             public override double[] Prize
             {
                 get
                 {
-                    if (Participants.Length < 3) return new double[0];
-                    Participant.Sort(Participants);
+                    if (Participants.Count < 3)
+                        return new double[0];
 
-                    // Распределяем 80% фонда для первых трех мест
+                    int countAboveMid = Participants.Count / 2; 
+                    countAboveMid = Math.Max(3, Math.Min(10, countAboveMid)); 
 
-                    double[] prizes = new double[Participants.Length];
+                    double[] prizes = new double[countAboveMid + 3]; 
+                    double prizePerAboveMid = (PrizeFund * 0.2) / countAboveMid; 
 
-                    prizes[0] = Bank * 0.4;
-                    prizes[1] = Bank * 0.25;
-                    prizes[2] = Bank * 0.15;
-
-                    // Распределяем оставшиеся 20% среди верхней половины (кроме первых трех)
-                    int topCount = Math.Max(3, Math.Min(10, Participants.Length / 2));
-                    double sharedPrize = Bank * 0.2 / (topCount - 3); // Делим 20% на оставшихся участников
-                    for (int i = 3; i < topCount; i++)
+                    for (int i = 0; i < countAboveMid; i++)
                     {
-                        prizes[i] = sharedPrize;
+                        prizes[i] = prizePerAboveMid;
                     }
 
-                    return prizes.Take(Participants.Length).ToArray();
+                    prizes[countAboveMid] = PrizeFund * 0.4; 
+                    prizes[countAboveMid + 1] = PrizeFund * 0.25;
+                    prizes[countAboveMid + 2] = PrizeFund * 0.15;
+
+                    return prizes;
                 }
             }
         }
 
-        public class Participant
+        public struct Participant
         {
             private string _name;
             private string _surname;
@@ -103,19 +110,38 @@ namespace Lab_7
             public string Name => _name;
             public string Surname => _surname;
 
-            public int[,] Marks => _marks.Clone() as int[,];
+            public int[,] Marks
+            {
+                get
+                {
+                    if (_marks == null || _marks.GetLength(0) == 0 || _marks.GetLength(1) == 0) return null;
+
+                    int[,] copymatrix = new int[_marks.GetLength(0), _marks.GetLength(1)];
+                    for (int i = 0; i < _marks.GetLength(0); i++)
+                    {
+                        for (int j = 0; j < _marks.GetLength(1); j++)
+                        {
+                            copymatrix[i, j] = _marks[i, j];
+                        }
+                    }
+                    return copymatrix;
+                }
+            }
 
             public int TotalScore
             {
                 get
                 {
+                    if (_marks == null || _marks.GetLength(0) == 0 || _marks.GetLength(1) == 0) return 0;
+
                     int sum = 0;
-
-                    foreach (int mark in _marks)
+                    for (int i = 0; i < _marks.GetLength(0); i++)
                     {
-                        sum += mark;
+                        for (int j = 0; j < _marks.GetLength(1); j++)
+                        {
+                            sum += _marks[i, j];
+                        }
                     }
-
                     return sum;
                 }
             }
@@ -130,7 +156,8 @@ namespace Lab_7
 
             public void Jump(int[] result)
             {
-                if (result == null || result.Length != 5 || _index >= 2) return;
+                if (_marks == null || result == null || result.Length == 0 || _index > 1) return;
+
                 for (int i = 0; i < 5; i++)
                 {
                     _marks[_index, i] = result[i];
@@ -141,7 +168,22 @@ namespace Lab_7
             public static void Sort(Participant[] array)
             {
                 if (array == null || array.Length == 0) return;
-                Array.Sort(array, (p1, p2) => p2.TotalScore.CompareTo(p1.TotalScore));
+
+                for (int i = 0; i < array.Length - 1; i++)
+                {
+                    for (int j = 0; j < array.Length - i - 1; j++)
+                    {
+                        if (array[j + 1].TotalScore > array[j].TotalScore)
+                        {
+                            (array[j + 1], array[j]) = (array[j], array[j + 1]);
+                        }
+                    }
+                }
+            }
+
+            public void Print()
+            {
+                Console.WriteLine($"{_surname} {_name} - Total Score: {TotalScore}");
             }
         }
     }
