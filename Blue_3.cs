@@ -80,11 +80,21 @@ namespace Lab_7
 
         public class HockeyPlayer : Participant
         {
-            private static List<HockeyPlayer> allHockeyPlayers = new List<HockeyPlayer>();
+            private static HockeyPlayer[] allHockeyPlayers = new HockeyPlayer[0];
+            private static int hockeyPlayerCount = 0;
 
             public HockeyPlayer(string name, string surname) : base(name, surname)
             {
-                allHockeyPlayers.Add(this);
+                AddHockeyPlayer(this);
+            }
+
+            private static void AddHockeyPlayer(HockeyPlayer player)
+            {
+                if (hockeyPlayerCount >= allHockeyPlayers.Length)
+                {
+                    Array.Resize(ref allHockeyPlayers, allHockeyPlayers.Length + 10); 
+                }
+                allHockeyPlayers[hockeyPlayerCount++] = player;
             }
 
             public override bool IsExpelled
@@ -94,8 +104,12 @@ namespace Lab_7
                     if (penaltyTimes?.Contains(10) ?? false) return true;
 
                     double totalPenaltyMinutes = penaltyTimes?.Sum() ?? 0;
-                    double totalAllPenaltyMinutes = allHockeyPlayers.Sum(p => p.penaltyTimes?.Sum() ?? 0);
-                    double averagePenalty = totalAllPenaltyMinutes / allHockeyPlayers.Count;
+                    double totalAllPenaltyMinutes = 0;
+                    for (int i = 0; i < hockeyPlayerCount; i++)
+                    {
+                        totalAllPenaltyMinutes += allHockeyPlayers[i].penaltyTimes?.Sum() ?? 0;
+                    }
+                    double averagePenalty = totalAllPenaltyMinutes / hockeyPlayerCount;
 
                     return totalPenaltyMinutes > 0.1 * averagePenalty;
                 }
@@ -111,7 +125,19 @@ namespace Lab_7
 
             public void RemoveFromList()
             {
-                allHockeyPlayers.Remove(this);
+                for (int i = 0; i < hockeyPlayerCount; i++)
+                {
+                    if (allHockeyPlayers[i] == this)
+                    {
+                        for (int j = i; j < hockeyPlayerCount - 1; j++)
+                        {
+                            allHockeyPlayers[j] = allHockeyPlayers[j + 1];
+                        }
+                        hockeyPlayerCount--;
+                        allHockeyPlayers[hockeyPlayerCount] = null; 
+                        break;
+                    }
+                }
             }
         }
     }
