@@ -7,13 +7,13 @@ namespace Lab_7
     {
         public abstract class WaterJump
         {
-            private string _tournamentName;
-            private int _prizeFund;
+            private string _name;
+            private int _bank;
             private Participant[] _participants;
-            public int _participantCount;
+            private int _participantCount;
 
-            public string TournamentName => _tournamentName;
-            public int PrizeFund => _prizeFund;
+            public string Name => _name;
+            public int Bank => _bank;
             public Participant[] Participants
             {
                 get
@@ -24,10 +24,10 @@ namespace Lab_7
                 }
             }
 
-            protected WaterJump(string tournamentName, int prizeFund)
+            protected WaterJump(string name, int bank)
             {
-                _tournamentName = tournamentName ?? throw new ArgumentNullException(nameof(tournamentName));
-                _prizeFund = prizeFund;
+                _name = name ?? throw new ArgumentNullException(nameof(name));
+                _bank = bank;
                 _participants = new Participant[10];
                 _participantCount = 0;
             }
@@ -52,32 +52,23 @@ namespace Lab_7
                 }
             }
 
-            public abstract void StartCompetition();
             public abstract double[] Prize { get; }
         }
 
         public class WaterJump3m : WaterJump
         {
-            public WaterJump3m(string tournamentName, int prizeFund) : base(tournamentName, prizeFund) { }
-
-            public override void StartCompetition()
-            {
-                var sortedParticipants = Participants?.OrderByDescending(p => p.TotalScore).ToArray() ?? new Participant[0];
-                Participant.Sort(sortedParticipants);
-            }
+            public WaterJump3m(string name, int bank) : base(name, bank) { }
 
             public override double[] Prize
             {
                 get
                 {
-                    if (Participants == null || Participants.Length < 3)
-                        return new double[0];
-
+                    if (Participants == null || Participants.Length < 3) return new double[0];
                     return new double[]
                     {
-                        PrizeFund * 0.5,
-                        PrizeFund * 0.3,
-                        PrizeFund * 0.2
+                        Bank * 0.5, // 50% за первое место
+                        Bank * 0.3, // 30% за второе место
+                        Bank * 0.2  // 20% за третье место
                     };
                 }
             }
@@ -85,40 +76,35 @@ namespace Lab_7
 
         public class WaterJump5m : WaterJump
         {
-            public WaterJump5m(string tournamentName, int prizeFund) : base(tournamentName, prizeFund) { }
-
-            public override void StartCompetition()
-            {
-                var sortedParticipants = Participants?.OrderByDescending(p => p.TotalScore).ToArray() ?? new Participant[0];
-                Participant.Sort(sortedParticipants);
-            }
+            public WaterJump5m(string name, int bank) : base(name, bank) { }
 
             public override double[] Prize
             {
                 get
                 {
                     if (Participants == null || Participants.Length < 3)
-                        return new double[0];
+                        return new double[0]; 
 
                     int countAboveMid = Participants.Length / 2;
-                    countAboveMid = Math.Max(3, Math.Min(10, countAboveMid));
+                    countAboveMid = Math.Max(3, Math.Min(10, countAboveMid)); 
 
                     double[] prizes = new double[countAboveMid + 3];
-                    double prizePerAboveMid = (PrizeFund * 0.2) / countAboveMid;
 
+                    double prizePerAboveMid = (Bank * 0.2) / countAboveMid;
                     for (int i = 0; i < countAboveMid; i++)
                     {
                         prizes[i] = prizePerAboveMid;
                     }
 
-                    prizes[countAboveMid] = PrizeFund * 0.4;
-                    prizes[countAboveMid + 1] = PrizeFund * 0.25;
-                    prizes[countAboveMid + 2] = PrizeFund * 0.15;
+                    prizes[countAboveMid] = Bank * 0.4;     // 40% за первое место
+                    prizes[countAboveMid + 1] = Bank * 0.25; // 25% за второе место
+                    prizes[countAboveMid + 2] = Bank * 0.15; // 15% за третье место
 
                     return prizes;
                 }
             }
         }
+
 
         public struct Participant
         {
