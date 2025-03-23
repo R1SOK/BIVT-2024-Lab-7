@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace Lab_6
+namespace Lab_7
 {
     public class Blue_2
     {
@@ -9,27 +9,47 @@ namespace Lab_6
         {
             private string _tournamentName;
             private int _prizeFund;
-            private List<Participant> _participants;
+            private Participant[] _participants;
+            public int _participantCount;
 
             public string TournamentName => _tournamentName;
             public int PrizeFund => _prizeFund;
-            public IReadOnlyList<Participant> Participants => _participants;
+            public Participant[] Participants
+            {
+                get
+                {
+                    if (_participants == null)
+                        return new Participant[0];
+                    return _participants.Take(_participantCount).ToArray();
+                }
+            }
 
             protected WaterJump(string tournamentName, int prizeFund)
             {
-                _tournamentName = tournamentName;
+                _tournamentName = tournamentName ?? throw new ArgumentNullException(nameof(tournamentName));
                 _prizeFund = prizeFund;
-                _participants = new List<Participant>();
+                _participants = new Participant[10];
+                _participantCount = 0;
             }
 
             public void Add(Participant participant)
             {
-                _participants.Add(participant);
+                if (_participantCount >= _participants.Length)
+                {
+                    Array.Resize(ref _participants, _participants.Length * 2);
+                }
+                _participants[_participantCount++] = participant;
             }
 
-            public void Add(IEnumerable<Participant> participants)
+            public void Add(Participant[] participants)
             {
-                _participants.AddRange(participants);
+                if (participants == null)
+                    throw new ArgumentNullException(nameof(participants));
+
+                foreach (var participant in participants)
+                {
+                    Add(participant);
+                }
             }
 
             public abstract void StartCompetition();
@@ -42,7 +62,7 @@ namespace Lab_6
 
             public override void StartCompetition()
             {
-                var sortedParticipants = Participants.OrderByDescending(p => p.TotalScore).ToArray();
+                var sortedParticipants = Participants?.OrderByDescending(p => p.TotalScore).ToArray() ?? new Participant[0];
                 Participant.Sort(sortedParticipants);
             }
 
@@ -50,15 +70,15 @@ namespace Lab_6
             {
                 get
                 {
-                    if (Participants.Count < 3)
+                    if (Participants == null || Participants.Length < 3)
                         return new double[0];
 
-                    double[] prizes = new double[3];
-                    prizes[0] = PrizeFund * 0.5;
-                    prizes[1] = PrizeFund * 0.3;
-                    prizes[2] = PrizeFund * 0.2;
-
-                    return prizes;
+                    return new double[]
+                    {
+                        PrizeFund * 0.5,
+                        PrizeFund * 0.3,
+                        PrizeFund * 0.2
+                    };
                 }
             }
         }
@@ -69,7 +89,7 @@ namespace Lab_6
 
             public override void StartCompetition()
             {
-                var sortedParticipants = Participants.OrderByDescending(p => p.TotalScore).ToArray();
+                var sortedParticipants = Participants?.OrderByDescending(p => p.TotalScore).ToArray() ?? new Participant[0];
                 Participant.Sort(sortedParticipants);
             }
 
@@ -77,21 +97,21 @@ namespace Lab_6
             {
                 get
                 {
-                    if (Participants.Count < 3)
+                    if (Participants == null || Participants.Length < 3)
                         return new double[0];
 
-                    int countAboveMid = Participants.Count / 2; 
-                    countAboveMid = Math.Max(3, Math.Min(10, countAboveMid)); 
+                    int countAboveMid = Participants.Length / 2;
+                    countAboveMid = Math.Max(3, Math.Min(10, countAboveMid));
 
-                    double[] prizes = new double[countAboveMid + 3]; 
-                    double prizePerAboveMid = (PrizeFund * 0.2) / countAboveMid; 
+                    double[] prizes = new double[countAboveMid + 3];
+                    double prizePerAboveMid = (PrizeFund * 0.2) / countAboveMid;
 
                     for (int i = 0; i < countAboveMid; i++)
                     {
                         prizes[i] = prizePerAboveMid;
                     }
 
-                    prizes[countAboveMid] = PrizeFund * 0.4; 
+                    prizes[countAboveMid] = PrizeFund * 0.4;
                     prizes[countAboveMid + 1] = PrizeFund * 0.25;
                     prizes[countAboveMid + 2] = PrizeFund * 0.15;
 
@@ -110,30 +130,12 @@ namespace Lab_6
             public string Name => _name;
             public string Surname => _surname;
 
-            public int[,] Marks
-            {
-                get
-                {
-                    if (_marks == null || _marks.GetLength(0) == 0 || _marks.GetLength(1) == 0) return null;
-
-                    int[,] copymatrix = new int[_marks.GetLength(0), _marks.GetLength(1)];
-                    for (int i = 0; i < _marks.GetLength(0); i++)
-                    {
-                        for (int j = 0; j < _marks.GetLength(1); j++)
-                        {
-                            copymatrix[i, j] = _marks[i, j];
-                        }
-                    }
-                    return copymatrix;
-                }
-            }
+            public int[,] Marks => (int[,])_marks.Clone();
 
             public int TotalScore
             {
                 get
                 {
-                    if (_marks == null || _marks.GetLength(0) == 0 || _marks.GetLength(1) == 0) return 0;
-
                     int sum = 0;
                     for (int i = 0; i < _marks.GetLength(0); i++)
                     {
@@ -148,15 +150,16 @@ namespace Lab_6
 
             public Participant(string name, string surname)
             {
-                _name = name;
-                _surname = surname;
+                _name = name ?? throw new ArgumentNullException(nameof(name));
+                _surname = surname ?? throw new ArgumentNullException(nameof(surname));
                 _marks = new int[2, 5];
                 _index = 0;
             }
 
             public void Jump(int[] result)
             {
-                if (_marks == null || result == null || result.Length == 0 || _index > 1) return;
+                if (result == null || result.Length != 5 || _index > 1)
+                    throw new ArgumentException("Invalid jump result");
 
                 for (int i = 0; i < 5; i++)
                 {
@@ -167,7 +170,8 @@ namespace Lab_6
 
             public static void Sort(Participant[] array)
             {
-                if (array == null || array.Length == 0) return;
+                if (array == null)
+                    throw new ArgumentNullException(nameof(array));
 
                 for (int i = 0; i < array.Length - 1; i++)
                 {
