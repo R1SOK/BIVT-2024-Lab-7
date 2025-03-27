@@ -26,19 +26,24 @@ namespace Lab_7
 
             protected WaterJump(string name, int bank)
             {
-                _name = name ?? throw new ArgumentNullException(nameof(name));
+                _name = name;
                 _bank = bank;
-                _participants = new Participant[10];
+                _participants = new Participant[0];
                 _participantCount = 0;
             }
 
             public void Add(Participant participant)
             {
-                if (_participantCount >= _participants.Length)
+                if (_participants == null) return;
+
+                Participant[] newParticipants = new Participant[_participants.Length + 1];
+                for (int i = 0; i < _participants.Length; i++)
                 {
-                    Array.Resize(ref _participants, _participants.Length * 2);
+                    newParticipants[i] = _participants[i];
                 }
-                _participants[_participantCount++] = participant;
+                newParticipants[_participants.Length] = participant;
+
+                _participants = newParticipants;
             }
 
             public void Add(Participant[] participants)
@@ -46,7 +51,7 @@ namespace Lab_7
                 if (participants == null)
                     throw new ArgumentNullException(nameof(participants));
 
-                foreach (var participant in participants)
+                foreach (Participant participant in participants)
                 {
                     Add(participant);
                 }
@@ -63,12 +68,13 @@ namespace Lab_7
             {
                 get
                 {
-                    if (Participants == null || Participants.Length < 3) return new double[0];
-                    return new double[]
+                    if (Participants == null || Participants.Length < 3) return null;
                     {
-                        Bank * 0.5, // 50% за первое место
-                        Bank * 0.3, // 30% за второе место
-                        Bank * 0.2  // 20% за третье место
+                        double[] prize = new double[3];
+                        prize[0] = 0.5 * Bank;
+                        prize[1] = 0.3 * Bank;
+                        prize[2] = 0.2 * Bank;
+                        return prize;
                     };
                 }
             }
@@ -82,25 +88,26 @@ namespace Lab_7
             {
                 get
                 {
-                    if (Participants == null || Participants.Length < 3)
-                        return new double[0]; 
+                    if (Participants == null || Participants.Length < 3) return null;
 
-                    int countAboveMid = Participants.Length / 2;
-                    countAboveMid = Math.Max(3, Math.Min(10, countAboveMid)); 
+                    int count = Participants.Length / 2;
 
-                    double[] prizes = new double[countAboveMid + 3];
+                    if (count > 10) count = 10;
+                    else if (count < 3) return null;
 
-                    double prizePerAboveMid = (Bank * 0.2) / countAboveMid;
-                    for (int i = 0; i < countAboveMid; i++)
+                    double[] prize = new double[count];
+                    double raise = (0.2 * Bank) / count;
+
+                    prize[0] = 0.4 * Bank + raise;
+                    prize[1] = 0.25 * Bank + raise;
+                    prize[2] = 0.15 * Bank + raise;
+
+                    for (int i = 3; i < count; i++)
                     {
-                        prizes[i] = prizePerAboveMid;
+                        prize[i] = raise;
                     }
 
-                    prizes[countAboveMid] = Bank * 0.4;     // 40% за первое место
-                    prizes[countAboveMid + 1] = Bank * 0.25; // 25% за второе место
-                    prizes[countAboveMid + 2] = Bank * 0.15; // 15% за третье место
-
-                    return prizes;
+                    return prize;
                 }
             }
         }
