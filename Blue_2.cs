@@ -122,14 +122,14 @@ namespace Lab_7
                 {
                     if (_marks == null || _marks.Length == 0) return 0;
                     int sum = 0;
-                    for (int i = 0; i < _marks.GetLength(0); i++)
+                    for (int i = 0; i <2; i++)
                     {
-                        for (int j = 0; j < _marks.GetLength(1); j++)
+                        for (int j = 0; j < 5; j++)
                         {
                             sum += _marks[i, j];
                         }
                     }
-                    return sum;
+                        return sum;
                 }
             }
 
