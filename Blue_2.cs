@@ -14,15 +14,7 @@ namespace Lab_7
 
             public string Name => _name;
             public int Bank => _bank;
-            public Participant[] Participants
-            {
-                get
-                {
-                    if (_participants == null)
-                        return new Participant[0];
-                    return _participants.Take(_participantCount).ToArray();
-                }
-            }
+            public Participant[] Participants => _participants;
 
             protected WaterJump(string name, int bank)
             {
@@ -48,8 +40,7 @@ namespace Lab_7
 
             public void Add(Participant[] participants)
             {
-                if (participants == null)
-                    throw new ArgumentNullException(nameof(participants));
+                if (participants == null || participants.Length == 0) return;
 
                 foreach (Participant participant in participants)
                 {
@@ -129,6 +120,7 @@ namespace Lab_7
             {
                 get
                 {
+                    if (_marks == null || _marks.Length == 0) return 0;
                     int sum = 0;
                     for (int i = 0; i < _marks.GetLength(0); i++)
                     {
@@ -143,28 +135,28 @@ namespace Lab_7
 
             public Participant(string name, string surname)
             {
-                _name = name ?? throw new ArgumentNullException(nameof(name));
-                _surname = surname ?? throw new ArgumentNullException(nameof(surname));
+                _name = name;
+                _surname = surname;
                 _marks = new int[2, 5];
                 _index = 0;
             }
 
             public void Jump(int[] result)
             {
-                if (result == null || result.Length != 5 || _index > 1)
-                    throw new ArgumentException("Invalid jump result");
+                if (result == null || _marks == null || result.Length == 0) return;
 
-                for (int i = 0; i < 5; i++)
+                if (_index >= 2) return;
+
+                for (int j = 0; j < 5; j++)
                 {
-                    _marks[_index, i] = result[i];
+                    _marks[_index, j] = result[j];
                 }
                 _index++;
             }
 
             public static void Sort(Participant[] array)
             {
-                if (array == null)
-                    throw new ArgumentNullException(nameof(array));
+                if (array == null || array.Length <= 1) return;
 
                 for (int i = 0; i < array.Length - 1; i++)
                 {
