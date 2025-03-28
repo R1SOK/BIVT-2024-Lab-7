@@ -1,6 +1,5 @@
 using System;
 using System.Security.Cryptography;
-using static Lab_7.Blue_5;
 
 namespace Lab_7
 {
@@ -162,9 +161,10 @@ namespace Lab_7
                 }
                 return teams[Imax];
             }
-
-
-            public abstract void Print();
+            public void Print()
+            {
+                Console.WriteLine($"{_name}: Лучшее место - {TopPlace} ; Общий счёт - {SummaryScore}");
+            }
         }
 
         public class ManTeam : Team
@@ -185,23 +185,14 @@ namespace Lab_7
                         count++;
                     }
                 }
-                if (plases == 0) { throw new Exception("invalid count"); }
                 return 100 * count  / plases ;
 
-            }
-
-            public override void Print()
-            {
-                Console.WriteLine($"Мужская команда: {Name}");
-                for (int i = 0; i < _count; i++)
-                    _sportsmen[i].Print();
             }
         }
 
         public class WomanTeam : Team
         {
             public WomanTeam(string name) : base(name) { }
-
             protected override double GetTeamStrength()
             {
                 if (_count == 0) return 0;
@@ -219,13 +210,6 @@ namespace Lab_7
                     }
                 }
                 return 100 * plases * count / firsts;
-            }
-
-            public override void Print()
-            {
-                Console.WriteLine($"Женская команда: {Name}");
-                for (int i = 0; i < _count; i++)
-                    _sportsmen[i].Print();
             }
         }
     }
