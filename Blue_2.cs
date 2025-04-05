@@ -114,7 +114,23 @@ namespace Lab_7
             public string Name => _name;
             public string Surname => _surname;
 
-            public int[,] Marks => (int[,])_marks.Clone();
+            public int[,] Marks
+            {
+                get
+                {
+                    if (_marks == null) return null;
+
+                    int[,] copy = new int[2, 5];
+                    for (int i = 0; i < 2; i++)
+                    {
+                        for (int j = 0; j < 5; j++)
+                        {
+                            copy[i, j] = _marks[i, j];
+                        }
+                    }
+                    return copy;
+                }
+            }
 
             public int TotalScore
             {
@@ -122,14 +138,14 @@ namespace Lab_7
                 {
                     if (_marks == null || _marks.Length == 0) return 0;
                     int sum = 0;
-                    for (int i = 0; i <2; i++)
+                    for (int i = 0; i < _marks.GetLength(0); i++)
                     {
-                        for (int j = 0; j < 5; j++)
+                        for (int j = 0; j < _marks.GetLength(1); j++)
                         {
                             sum += _marks[i, j];
                         }
                     }
-                        return sum;
+                    return sum;
                 }
             }
 
